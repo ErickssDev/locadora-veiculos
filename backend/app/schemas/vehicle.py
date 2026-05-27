@@ -1,5 +1,16 @@
 from datetime import datetime
+from enum import Enum
 from pydantic import BaseModel, Field
+
+
+class VehicleCategory(str, Enum):
+    hatch = "hatch"
+    sedan = "sedan"
+    suv = "suv"
+    pickup = "pickup"
+    van = "van"
+    moto = "moto"
+    outro = "outro"
 
 
 class VehicleBase(BaseModel):
@@ -8,7 +19,7 @@ class VehicleBase(BaseModel):
     year: int
     color: str | None = None
     plate: str | None = None
-    category: str = Field(..., pattern="^(hatch|sedan|suv|pickup|van|moto|outro)$")
+    category: VehicleCategory = Field(..., description="Categoria do veículo")
     description: str | None = None
     daily_rate: float
     city: str
@@ -26,7 +37,7 @@ class VehicleUpdate(BaseModel):
     year: int | None = None
     color: str | None = None
     plate: str | None = None
-    category: str | None = None
+    category: VehicleCategory | None = None
     description: str | None = None
     daily_rate: float | None = None
     city: str | None = None
@@ -35,6 +46,7 @@ class VehicleUpdate(BaseModel):
 
 
 class VehicleResponse(VehicleBase):
+    category: str
     id: int
     owner_id: int
     status: str

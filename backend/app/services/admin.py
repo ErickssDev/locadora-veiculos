@@ -49,9 +49,56 @@ async def list_users(db: AsyncSession) -> dict:
 
 async def list_vehicles(db: AsyncSession) -> dict:
     result = await db.execute(select(Vehicle).order_by(Vehicle.created_at.desc()))
-    return {"success": True, "vehicles": result.scalars().all()}
+    vehicles = result.scalars().all()
+
+    vehicles_serialized = []
+    for v in vehicles:
+        vehicles_serialized.append(
+            {
+                "id": v.id,
+                "owner_id": v.owner_id,
+                "brand": v.brand,
+                "model": v.model,
+                "year": v.year,
+                "color": v.color,
+                "plate": v.plate,
+                "category": v.category,
+                "description": v.description,
+                "daily_rate": float(v.daily_rate or 0.0),
+                "city": v.city,
+                "state": v.state,
+                "status": v.status,
+                "is_available": bool(v.is_available),
+                "created_at": v.created_at.isoformat() if v.created_at else None,
+                "updated_at": v.updated_at.isoformat() if v.updated_at else None,
+            }
+        )
+
+    return {"success": True, "vehicles": vehicles_serialized}
 
 
 async def list_reservations(db: AsyncSession) -> dict:
     result = await db.execute(select(Reservation).order_by(Reservation.created_at.desc()))
-    return {"success": True, "reservations": result.scalars().all()}
+    reservations = result.scalars().all()
+
+    reservations_serialized = []
+    for r in reservations:
+        reservations_serialized.append(
+            {
+                "id": r.id,
+                "vehicle_id": r.vehicle_id,
+                "client_id": r.client_id,
+                "owner_id": r.owner_id,
+                "start_date": r.start_date.isoformat() if r.start_date else None,
+                "end_date": r.end_date.isoformat() if r.end_date else None,
+                "total_days": r.total_days,
+                "daily_rate_snapshot": float(r.daily_rate_snapshot or 0.0),
+                "total_amount": float(r.total_amount or 0.0),
+                "status": r.status,
+                "cancellation_reason": r.cancellation_reason,
+                "created_at": r.created_at.isoformat() if r.created_at else None,
+                "updated_at": r.updated_at.isoformat() if r.updated_at else None,
+            }
+        )
+
+    return {"success": True, "reservations": reservations_serialized}
