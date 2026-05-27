@@ -19,6 +19,11 @@ async def list_vehicles(db: AsyncSession = Depends(get_db)) -> list[VehicleRespo
     return await vehicles_service.list_public_vehicles(db)
 
 
+@router.get("/me", response_model=list[VehicleResponse])
+async def list_my_vehicles(db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)) -> list[VehicleResponse]:
+    return await vehicles_service.list_owner_vehicles(db, current_user)
+
+
 @router.get("/{vehicle_id}", response_model=VehicleResponse)
 async def get_vehicle(vehicle_id: int, db: AsyncSession = Depends(get_db)) -> VehicleResponse:
     return await vehicles_service.get_vehicle(db, vehicle_id)
@@ -32,8 +37,3 @@ async def update_vehicle(vehicle_id: int, payload: VehicleUpdate, db: AsyncSessi
 @router.delete("/{vehicle_id}")
 async def delete_vehicle(vehicle_id: int, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)) -> dict:
     return await vehicles_service.delete_vehicle(db, current_user, vehicle_id)
-
-
-@router.get("/me", response_model=list[VehicleResponse])
-async def list_my_vehicles(db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)) -> list[VehicleResponse]:
-    return await vehicles_service.list_owner_vehicles(db, current_user)

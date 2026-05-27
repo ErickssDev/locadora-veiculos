@@ -1,3 +1,4 @@
+from enum import Enum
 from sqlalchemy import and_, delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,6 +11,7 @@ async def create_vehicle(db: AsyncSession, current_user: User, payload: VehicleC
     if current_user.user_type != "owner":
         raise PermissionError("Apenas owners podem cadastrar veículos")
 
+    category = payload.category.value if isinstance(payload.category, Enum) else payload.category
     vehicle = Vehicle(
         owner_id=current_user.id,
         brand=payload.brand,
@@ -17,11 +19,12 @@ async def create_vehicle(db: AsyncSession, current_user: User, payload: VehicleC
         year=payload.year,
         color=payload.color,
         plate=payload.plate,
-        category=payload.category,
+        category=category,
         description=payload.description,
         daily_rate=payload.daily_rate,
         city=payload.city,
         state=payload.state,
+        status="approved",
         is_available=payload.is_available,
     )
     db.add(vehicle)
@@ -45,6 +48,8 @@ async def update_vehicle(db: AsyncSession, current_user: User, vehicle_id: int, 
         raise PermissionError("Veículo não encontrado ou acesso negado")
 
     for field, value in payload.model_dump(exclude_unset=True).items():
+        if field == "category" and isinstance(value, Enum):
+            value = value.value
         setattr(vehicle, field, value)
 
     db.add(vehicle)
