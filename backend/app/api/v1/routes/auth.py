@@ -1,4 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
+from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db
@@ -24,6 +26,26 @@ async def register(payload: UserRegister, db: AsyncSession = Depends(get_db)) ->
 @router.post("/login", response_model=TokenResponse)
 async def login(payload: LoginRequest, db: AsyncSession = Depends(get_db)) -> TokenResponse:
     return await auth_service.login_user(db, payload)
+
+
+@router.post("/token")
+async def token(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)) -> dict:
+    """OAuth2-compatible token endpoint for Swagger UI/Authorize.
+
+    Expects form fields: username, password.
+    Returns a minimal response with `access_token` and `token_type` so the Swagger Authorize dialog works.
+    """
+    # build LoginRequest from form data (username used as email)
+    try:
+        login_payload = LoginRequest(email=form_data.username, password=form_data.password)
+    except ValidationError:
+        # Some clients (or Swagger UI) may submit '+' in form values as space.
+        # If the username contains spaces but looks like an email when '+' is restored,
+        # try replacing spaces with '+' and validate again.
+        username_fixed = form_data.username.replace(' ', '+')
+        login_payload = LoginRequest(email=username_fixed, password=form_data.password)
+    token_resp = await auth_service.login_user(db, login_payload)
+    return {"access_token": token_resp.access_token, "token_type": token_resp.token_type}
 
 
 @router.post("/refresh", response_model=TokenResponse)

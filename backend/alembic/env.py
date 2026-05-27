@@ -4,6 +4,7 @@ from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
+from sqlalchemy.ext.asyncio import create_async_engine
 
 from alembic import context
 
@@ -37,17 +38,45 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-    )
+    configuration = config.get_section(config.config_ini_section)
 
-    with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
+    # Use async engine for aiosqlite URLs
+    if settings.database_url.startswith("sqlite+aiosqlite"):
+        connectable = create_async_engine(
+            settings.database_url,
+            poolclass=pool.StaticPool,
+            future=True,
+            connect_args={"check_same_thread": False},
+        )
 
-        with context.begin_transaction():
-            context.run_migrations()
+        async def run_async_migrations() -> None:
+            async with connectable.connect() as connection:
+                await connection.run_sync(_run_migrations)
+
+        def _run_migrations(connection):
+            context.configure(connection=connection, target_metadata=target_metadata)
+            with context.begin_transaction():
+                context.run_migrations()
+
+        import asyncio
+
+        asyncio.run(run_async_migrations())
+    else:
+        # Fall back to sync engine
+        if "sqlite" in settings.database_url:
+            configuration["sqlalchemy.poolclass"] = pool.StaticPool
+
+        connectable = engine_from_config(
+            configuration,
+            prefix="sqlalchemy.",
+            poolclass=pool.StaticPool if "sqlite" in settings.database_url else pool.NullPool,
+        )
+
+        with connectable.connect() as connection:
+            context.configure(connection=connection, target_metadata=target_metadata)
+
+            with context.begin_transaction():
+                context.run_migrations()
 
 
 if context.is_offline_mode():
