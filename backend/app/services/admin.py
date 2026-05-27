@@ -25,7 +25,26 @@ async def get_dashboard(db: AsyncSession) -> dict:
 
 async def list_users(db: AsyncSession) -> dict:
     result = await db.execute(select(User).order_by(User.created_at.desc()))
-    return {"success": True, "users": result.scalars().all()}
+    users = result.scalars().all()
+
+    users_serialized = []
+    for u in users:
+        users_serialized.append(
+            {
+                "id": u.id,
+                "name": u.name,
+                "email": u.email,
+                "phone": u.phone,
+                "user_type": u.user_type,
+                "avatar_url": u.avatar_url,
+                "is_active": bool(u.is_active),
+                "is_verified": bool(u.is_verified),
+                "created_at": u.created_at.isoformat() if u.created_at else None,
+                "updated_at": u.updated_at.isoformat() if u.updated_at else None,
+            }
+        )
+
+    return {"success": True, "users": users_serialized}
 
 
 async def list_vehicles(db: AsyncSession) -> dict:

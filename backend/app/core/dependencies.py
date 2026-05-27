@@ -10,7 +10,7 @@ from app.core.security import decode_token
 from app.db.session import AsyncSessionLocal
 from app.models.user import User
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/token")
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
