@@ -66,8 +66,8 @@ export interface Notification {
 // ==========================================
 
 export const api = axios.create({
-  // Atualize aqui com a URL ativa do seu Ngrok ou troque para 'http://localhost:8000/api/v1' se testar local
-  baseURL: 'https://vengeful-savior-apri.ngrok-free.app/api/v1', 
+  // URL corrigida de acordo com o túnel ativo do Ngrok do Erick
+  baseURL: 'https://vengeful-savior-apricot.ngrok-free.dev/api/v1', 
 });
 
 // Interceptor para injetar o Token JWT automaticamente em rotas protegidas
