@@ -21,14 +21,15 @@ def create_app() -> FastAPI:
     limiter = Limiter(key_func=get_remote_address)
     app.state.limiter = limiter
 
-    app.add_middleware(SlowAPIMiddleware)
     app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173","http://127.0.0.1:5173"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+    app.add_middleware(SlowAPIMiddleware)
 
     @app.exception_handler(ValueError)
     async def value_error_handler(request: Request, exc: ValueError) -> JSONResponse:
